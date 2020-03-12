@@ -1,23 +1,62 @@
-from numpy import array, zeros, ones, arange, exp, dot, save, pi
-from numpy.random import randn, randint
+from numpy import array, zeros, ones, arange, exp, dot, save, pi, linspace,\
+                  matrix, ceil
+from numpy.random import randn, randint, uniform
 from numpy.linalg import norm
 import matplotlib.pylab as plt
 
 class GeneralNetwork:
-    list_of_weight_matrices = []
-    list_of_bias_vectors    = []
     def __init__(self, number_of_layers, neurons_per_layer):
-
+        list_of_weight_matrices = [randn(neurons_per_layer[0], neurons_per_layer[0])]
+        list_of_bias_vectors    = [randn(neurons_per_layer[0], 1)]
         self.list_of_weight_matrices = list_of_weight_matrices
         self.list_of_bias_vectors    = list_of_bias_vectors
-        for i in arange(len(neurons_per_layer) - 1):
-            self.list_of_weights.append(randn(neurons_per_layer[i],\
-                                        neurons_per_layer[i + 1]))
+        for i in arange(1, len(neurons_per_layer)):
+            self.list_of_weight_matrices.append(randn(neurons_per_layer[i],\
+                                        neurons_per_layer[i - 1]))
             self.list_of_bias_vectors.append(randn(neurons_per_layer[i], 1))
-        
+
+
+    def activate(self, x, W, b):
+        return 1 / (1 + exp(-(dot(W, x) + b)))
+
+    def train(self, Data, eta = 0.05, niter = 10000):
+
+        cost = zeros(niter)
+        for counter in arange(niter):
+            k = randint(Data.xtrain.shape[0])
+
+            a2 = self.activate(Data.xtrain[:, k], self.list_of_weight_matrices[0], \
+                               self.list_of_bias_vectors[0])
+            a3 = self.activate(a2, self.list_of_weight_matrices[1], \
+                               self.list_of_bias_vectors[1])
+            a4 = self.activate(a3, self.list_of_weight_matrices[2], \
+                               self.list_of_bias_vectors[2])
 
 
 
+
+
+class Data:
+    def __init__(self, number_of_data_points):
+        self.x           = linspace(0, 1, number_of_data_points)
+
+        x1               = zeros((1, number_of_data_points))
+        x2               = zeros((1, number_of_data_points))
+
+        x1[0,:]          = uniform(0, -self.x + 1, self.x.shape[0])
+        x2[0,:]          = uniform(-self.x + 1, 1, self.x.shape[0])
+
+        y1               = zeros((1, int(number_of_data_points / 2)))
+        y2               = ones((1,  int(number_of_data_points / 2)))
+
+        self.xtrain      = zeros((2, number_of_data_points))
+        self.ytrain      = zeros((2, number_of_data_points))
+
+        self.xtrain[0,:], self.xtrain[1,:]                = x1, x2
+        self.ytrain[0, 0:int(number_of_data_points / 2)]  = y2
+        self.ytrain[0, int(number_of_data_points   / 2):] = y1
+        self.ytrain[1, 0:int(number_of_data_points / 2)]  = y1
+        self.ytrain[1, int(number_of_data_points   / 2):] = y2
 
 
 class Network:
@@ -79,6 +118,7 @@ class Network:
 
     def activate(self, x, W, b):
         return 1 / (1 + exp(-(dot(W, x) + b)))
+
     def cost(self, x1, x2):
 
         costvec = zeros((10, 1))
@@ -105,11 +145,20 @@ class Network:
 
 if __name__ == '__main__':
 
-    x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, \
-                0.6, 0.5, 0.9, 0.4, 0.7])
-    x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, \
-                0.3, 0.6, 0.2, 0.4, 0.6])
 
-    Network = Network()
+    # NAIVE
+#    x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, \
+#                0.6, 0.5, 0.9, 0.4, 0.7])
+#    x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, \
+#                0.3, 0.6, 0.2, 0.4, 0.6])
+
+#    Network = Network()
     #Visual  = Network.visual(x1, x2)
-    Cost    = Network.train(x1, x2)
+#    Cost    = Network.train(x1, x2)
+
+
+    # START OF GENERAL FORM
+
+    Network = GeneralNetwork(3, [2, 5, 2])
+    Data    = Data(10)
+    Network.train(Data)
