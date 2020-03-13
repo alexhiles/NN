@@ -53,8 +53,6 @@ class GeneralNetwork:
 
             self.weights[0]  -= eta * delta[-1] * xtrain.T
 
-            self.weights[1]  -= eta * delta[-2] * activation[1]
-            self.weights[2]  -= eta * delta[-3] * activation[2]
             for s in arange(0, self.number_of_layers):
                 self.biases[s]        -= eta * delta[s]
                 if s >= 1:
