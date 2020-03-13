@@ -9,7 +9,7 @@ class GeneralNetwork:
         list_of_weight_matrices = [randn(neurons_per_layer[0], neurons_per_layer[0])]
         list_of_bias_vectors    = [randn(neurons_per_layer[0], 1)]
 
-        self.weights = list_of_weight_matrices
+        self.weights   = list_of_weight_matrices
         self.biases    = list_of_bias_vectors
 
         self.number_of_layers   = number_of_layers
@@ -23,12 +23,11 @@ class GeneralNetwork:
     def activate(self, x, W, b):
         return 1 / (1 + exp(-(dot(W, x) + b)))
 
-    def train(self, Data, eta = 0.05, niter = 10000):
+    def train(self, Data, eta = 0.05, niter = 1000):
 
         cost   = zeros(niter)
         xtrain = zeros((Data.xtrain.shape[0], 1))
         ytrain = zeros((Data.ytrain.shape[0], 1))
-
         activation = []
         delta      = []
         for counter in arange(niter):
@@ -42,7 +41,7 @@ class GeneralNetwork:
                 xtrain = activation[s]
             ytrain[:, 0] = Data.ytrain[:, k]
 
-            # Back Prop
+            #  Back Prop
 
             delta.append(activation[-1] * (1 - activation[-1]) * \
                               activation[-1] - ytrain)
@@ -50,7 +49,7 @@ class GeneralNetwork:
                 delta.append(activation[-2 - s] * (1 - activation[-2 - s]) * \
                 dot(self.weights[-1  - s].T, delta[s]))
 
-            # Update
+            #  Update
 
             self.weights[0]  -= eta * delta[-1] * xtrain.T
 
@@ -75,15 +74,11 @@ class GeneralNetwork:
         activation = []
         for i in arange(temp_cost.shape[0]):
             x[0,0], x[1,0] = Data.xtrain[0,i], Data.xtrain[1,i]
-            a2 = self.activate(x,  self.weights[0], self.biases[0])
-            a3 = self.activate(a2,  self.weights[0], self.biases[0])
-            a4 = self.activate(a3,  self.weights[0], self.biases[0])
-
-            #for s in arange(self.number_of_layers):
-            #    activation.append(self.activate(xtrain,            \
-            #            self.weights[s], self.biases[s]))
-            #    xtrain = activation[s]
-            temp_cost[i] = norm(Data.ytrain - a4, 2)
+            for s in arange(self.number_of_layers):
+                activation.append(self.activate(x,            \
+                        self.weights[s], self.biases[s]))
+                x = activation[s]
+            temp_cost[i] = norm(Data.ytrain - activation[-1], 2)
         return norm(temp_cost, 2)**2
 
 class Data:
