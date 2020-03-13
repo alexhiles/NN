@@ -8,33 +8,83 @@ class GeneralNetwork:
     def __init__(self, number_of_layers, neurons_per_layer):
         list_of_weight_matrices = [randn(neurons_per_layer[0], neurons_per_layer[0])]
         list_of_bias_vectors    = [randn(neurons_per_layer[0], 1)]
-        self.list_of_weight_matrices = list_of_weight_matrices
-        self.list_of_bias_vectors    = list_of_bias_vectors
-        for i in arange(1, len(neurons_per_layer)):
-            self.list_of_weight_matrices.append(randn(neurons_per_layer[i],\
-                                        neurons_per_layer[i - 1]))
-            self.list_of_bias_vectors.append(randn(neurons_per_layer[i], 1))
 
+        self.weights = list_of_weight_matrices
+        self.biases    = list_of_bias_vectors
+
+        self.number_of_layers   = number_of_layers
+        self.neurons_per_layer  = neurons_per_layer
+
+        for i in arange(1, len(neurons_per_layer)):
+            self.weights.append(randn(neurons_per_layer[i],\
+                                        neurons_per_layer[i - 1]))
+            self.biases.append(randn(neurons_per_layer[i], 1))
 
     def activate(self, x, W, b):
         return 1 / (1 + exp(-(dot(W, x) + b)))
 
     def train(self, Data, eta = 0.05, niter = 10000):
 
-        cost = zeros(niter)
+        cost   = zeros(niter)
+        xtrain = zeros((Data.xtrain.shape[0], 1))
+        ytrain = zeros((Data.ytrain.shape[0], 1))
+
+        activation = []
+        delta      = []
         for counter in arange(niter):
             k = randint(Data.xtrain.shape[0])
+            xtrain[:, 0] = Data.xtrain[:, k]
 
-            a2 = self.activate(Data.xtrain[:, k], self.list_of_weight_matrices[0], \
-                               self.list_of_bias_vectors[0])
-            a3 = self.activate(a2, self.list_of_weight_matrices[1], \
-                               self.list_of_bias_vectors[1])
-            a4 = self.activate(a3, self.list_of_weight_matrices[2], \
-                               self.list_of_bias_vectors[2])
+            # Forward Prop
+            for s in arange(self.number_of_layers):
+                activation.append(self.activate(xtrain,            \
+                        self.weights[s], self.biases[s]))
+                xtrain = activation[s]
+            ytrain[:, 0] = Data.ytrain[:, k]
+
+            # Back Prop
+
+            delta.append(activation[-1] * (1 - activation[-1]) * \
+                              activation[-1] - ytrain)
+            for s in arange(0, self.number_of_layers-1):
+                delta.append(activation[-2 - s] * (1 - activation[-2 - s]) * \
+                dot(self.weights[-1  - s].T, delta[s]))
+
+            # Update
+
+            self.weights[0]  -= eta * delta[-1] * xtrain.T
+
+            self.weights[1]  -= eta * delta[-2] * activation[1]
+            self.weights[2]  -= eta * delta[-3] * activation[2]
+            for s in arange(0, self.number_of_layers):
+                self.biases[s]        -= eta * delta[s]
+                if s >= 1:
+                    self.weights[s]   -= eta * delta[-(s + 1)] * activation[s]
 
 
+            activation = []
+            delta      = []
 
+            #cost[counter] = self.cost_function(Data)
+            print(self.cost_function(Data))
+        return cost
 
+    def cost_function(self, Data):
+        temp_cost = zeros((Data.xtrain.shape[1],1))
+        x         = zeros((Data.xtrain.shape[0],1))
+        activation = []
+        for i in arange(temp_cost.shape[0]):
+            x[0,0], x[1,0] = Data.xtrain[0,i], Data.xtrain[1,i]
+            a2 = self.activate(x,  self.weights[0], self.biases[0])
+            a3 = self.activate(a2,  self.weights[0], self.biases[0])
+            a4 = self.activate(a3,  self.weights[0], self.biases[0])
+
+            #for s in arange(self.number_of_layers):
+            #    activation.append(self.activate(xtrain,            \
+            #            self.weights[s], self.biases[s]))
+            #    xtrain = activation[s]
+            temp_cost[i] = norm(Data.ytrain - a4, 2)
+        return norm(temp_cost, 2)**2
 
 class Data:
     def __init__(self, number_of_data_points):
@@ -58,109 +108,7 @@ class Data:
         self.ytrain[1, 0:int(number_of_data_points / 2)]  = y1
         self.ytrain[1, int(number_of_data_points   / 2):] = y2
 
-
-class Network:
-    def __init__(self, W2 = 0.5 * randn(2, 2), W3 = 0.5 * randn(3, 2), \
-                 W4 = 0.5 * randn(2, 3), b2 = 0.5 * randn(2, 1),       \
-                 b3 = 0.5 * randn(3, 1), b4 = 0.5 * randn(2, 1)):
-
-        self.W2 = W2
-        self.W3 = W3
-        self.W4 = W4
-
-        self.b2 = b2
-        self.b3 = b3
-        self.b4 = b4
-
-        self.y           = zeros((2, 10))
-        self.y[0:1, 0:5] = ones((1,  5))
-        self.y[0:1, 5: ] = zeros((1, 5))
-        self.y[0:1, 5: ] = zeros((1, 5))
-        self.y[1: , 5: ] = ones((1,  5))
-
-        print(self.y)
-        self.yt = zeros((2, 1))
-        self.x  = zeros((2, 1))
-
-    def train(self, x1, x2, eta = 0.005, niter = 10000):
-        total_cost = zeros(niter)
-        for counter in arange(niter):
-            k          = randint(10)
-            self.x[0], self.x[1] = x1[k], x2[k]
-
-            # FORWARD PROP
-            a2 = self.activate(self.x,  self.W2,  self.b2)
-            a3 = self.activate(a2,      self.W3,  self.b3)
-            a4 = self.activate(a3,      self.W4,  self.b4)
-
-
-            # BACKWARD PROP
-            self.yt[0, 0] = self.y[0, k]
-            self.yt[1, 0] = self.y[1, k]
-            delta4 = a4 * (1 - a4) * (a4 - self.yt)
-            delta3 = a3 * (1 - a3) * dot(self.W4.T, delta4)
-            delta2 = a2 * (1 - a2) * dot(self.W3.T, delta3)
-
-            # GRADIENT STEP
-            self.W2 = self.W2 - eta * delta2 * self.x.T
-            self.W3 = self.W3 - eta * delta3 * a2.T
-            self.W4 = self.W4 - eta * delta4 * a3.T
-
-            self.b2 = self.b2 - eta * delta2
-            self.b3 = self.b3 - eta * delta3
-            self.b4 = self.b4 - eta * delta4
-
-            Cost = self.cost(x1, x2)
-            #self.visual(x1, x2)
-
-            total_cost[counter] = Cost
-        return total_cost
-
-    def activate(self, x, W, b):
-        return 1 / (1 + exp(-(dot(W, x) + b)))
-
-    def cost(self, x1, x2):
-
-        costvec = zeros((10, 1))
-        x       = zeros((2,  1))
-        for i in arange(costvec.shape[0]):
-            x[0,0], x[1,0] = x1[i], x2[i]
-            a2 = self.activate(x,  self.W2, self.b2)
-            a3 = self.activate(a2, self.W3, self.b3)
-            a4 = self.activate(a3, self.W4, self.b4)
-            costvec[i] = norm(self.yt - a4, 2)
-
-        return norm(costvec, 2)**2
-
-    def visual(self, x1, x2):
-        plt.scatter(x1[0 : 5], x2[0 : 5], marker = '^',lw = 5, s = pi * 3,\
-                                          alpha = 0.5)
-        plt.scatter(x1[5 :  ], x2[5 :  ], marker = 'o',lw = 5, s = pi * 3,\
-                                          alpha = 1)
-
-        plt.show()
-        plt.close()
-        return
-
-
 if __name__ == '__main__':
-
-
-    # NAIVE
-    x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, \
-                0.6, 0.5, 0.9, 0.4, 0.7])
-    x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, \
-                0.3, 0.6, 0.2, 0.4, 0.6])
-
-    Network = Network()
-    #Visual  = Network.visual(x1, x2)
-    Cost    = Network.train(x1, x2)
-    import matplotlib.pylab as plt
-    plt.plot(Cost)
-    plt.show()
-
-    # START OF GENERAL FORM
-
-    #Network = GeneralNetwork(3, [2, 5, 2])
-    #Data    = Data(10)
-    #Network.train(Data)
+    Network = GeneralNetwork(3, [2, 3, 2])
+    Data    = Data(10)
+    Network.train(Data)
