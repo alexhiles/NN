@@ -82,7 +82,7 @@ class Network:
         self.yt = zeros((2, 1))
         self.x  = zeros((2, 1))
 
-    def train(self, x1, x2, eta = 0.5, niter = 10000):
+    def train(self, x1, x2, eta = 0.005, niter = 10000):
         total_cost = zeros(niter)
         for counter in arange(niter):
             k          = randint(10)
@@ -111,7 +111,7 @@ class Network:
             self.b4 = self.b4 - eta * delta4
 
             Cost = self.cost(x1, x2)
-            self.visual(x1, x2)
+            #self.visual(x1, x2)
 
             total_cost[counter] = Cost
         return total_cost
@@ -147,18 +147,20 @@ if __name__ == '__main__':
 
 
     # NAIVE
-#    x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, \
-#                0.6, 0.5, 0.9, 0.4, 0.7])
-#    x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, \
-#                0.3, 0.6, 0.2, 0.4, 0.6])
+    x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, \
+                0.6, 0.5, 0.9, 0.4, 0.7])
+    x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, \
+                0.3, 0.6, 0.2, 0.4, 0.6])
 
-#    Network = Network()
+    Network = Network()
     #Visual  = Network.visual(x1, x2)
-#    Cost    = Network.train(x1, x2)
-
+    Cost    = Network.train(x1, x2)
+    import matplotlib.pylab as plt
+    plt.plot(Cost)
+    plt.show()
 
     # START OF GENERAL FORM
 
-    Network = GeneralNetwork(3, [2, 5, 2])
-    Data    = Data(10)
-    Network.train(Data)
+    #Network = GeneralNetwork(3, [2, 5, 2])
+    #Data    = Data(10)
+    #Network.train(Data)
