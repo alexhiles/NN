@@ -1,5 +1,5 @@
 # Implementation of an artificial neural network
-Basic neural network implemented in Python.
+General artificial neural network (ANN) implemented in Python.
 
 Currently implemented:
 - Naive Implementation based on work in the [paper](https://epubs.siam.org/doi/pdf/10.1137/18M1165748).
