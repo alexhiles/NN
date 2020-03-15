@@ -2,8 +2,24 @@ import numpy as np
 from numpy.random import uniform, randint, randn, normal
 import sys
 def activate(x, W, b):
+    '''
+    Inputs:
+
+    Outputs:
+
+    Description: Sigmoid activation function
+    '''
     return 1 / (1 + np.exp(-(np.dot(W, x) + b)))
+
 def cost_function(W2,W3,W4,b2,b3,b4, x1, x2,y):
+
+    '''
+    Inputs:
+
+    Outputs:
+
+    Description: 
+    '''
 
     costvec = np.zeros((10, 1))
     x       = np.zeros((2,  1))
@@ -15,6 +31,7 @@ def cost_function(W2,W3,W4,b2,b3,b4, x1, x2,y):
         costvec[i] = np.linalg.norm(a4.ravel()-y[:,i], 2)
 
     return np.linalg.norm(costvec, 2)**2
+import matplotlib.pylab as plt
 
 x1 = np.array([0.1, 0.3, 0.1, 0.6, 0.4, 0.6, 0.5, 0.9, 0.4, 0.7])
 x2 = np.array([0.1, 0.4, 0.5, 0.9, 0.2, 0.3, 0.6, 0.2, 0.4, 0.6])
