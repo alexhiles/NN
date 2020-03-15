@@ -104,7 +104,6 @@ class GeneralNetwork:
                 x = a
             temp_cost[i] = norm(x.ravel() - Data.ytrain[:, i], 2)
         return norm(temp_cost, 2)**2
-
 class Data:
     def __init__(self, number_of_data_points,highamdata=True):
 
@@ -134,9 +133,18 @@ class Data:
         self.ytrain[1, int(number_of_data_points   / 2):] = y2
 
 if __name__ == '__main__':
-    Network = GeneralNetwork(4, [2, 5, 5, 2])
-    Data    = Data(20)
+
+    Network = GeneralNetwork(3, [2, 20, 2])
+    # define network architecture using GeneralNetwork object
+    Data    = Data(10, highamdata = True)
+    # create data using Data object
     cost = Network.train(Data)
+    # train the network with the data
+
     import matplotlib.pylab as plt
+    # import plotting module
     plt.plot(cost)
+    plt.xlabel(r'Iteration Number', fontsize = 24)
+    plt.ylabel(r'Cost', fontsize = 24)
+    plt.savefig('demonstration.eps')
     plt.show()
