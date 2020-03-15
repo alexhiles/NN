@@ -12,9 +12,9 @@ Here we test the code for an example case.
 
 Run
 
-
+```
 python ANN.py
-
+```
 in terminal
 
 Output:
@@ -28,6 +28,8 @@ Output:
 - Generalize code so that inputs and outputs can be of any length for training
 
 - Implement batch stochastic gradient descent and other optimizer techniques i.e. ADAM
+
+- Add visualization of classifying the data points into categories 
 
 References:
 
