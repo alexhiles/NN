@@ -146,5 +146,5 @@ if __name__ == '__main__':
     plt.plot(cost)
     plt.xlabel(r'Iteration Number', fontsize = 24)
     plt.ylabel(r'Cost', fontsize = 24)
-    plt.savefig('demonstration.eps')
+    plt.savefig('demonstration.png')
     plt.show()
