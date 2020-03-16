@@ -1,12 +1,16 @@
 from numpy import array, zeros, ones, arange, exp, dot, save, pi, linspace,\
-                  matrix, ceil
-from numpy.random import randn, randint, uniform, normal
+                  matrix, ceil, mean
+from numpy.random import randn, randint, uniform, normal, seed, shuffle
 from numpy.linalg import norm
 import matplotlib.pylab as plt
 import sys
 
+from matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern']})
+rc('text', usetex = True)
+
 class GeneralNetwork:
-    def __init__(self, number_of_layers, neurons_per_layer):
+    def __init__(self, number_of_layers, neurons_per_layer, verbose = 0):
 
         try:
             if number_of_layers != len(neurons_per_layer):
@@ -29,6 +33,8 @@ class GeneralNetwork:
         self.number_of_layers   = number_of_layers
         self.neurons_per_layer  = neurons_per_layer
 
+        self.verbose            = verbose
+
         for i in arange(1, len(neurons_per_layer)):
             self.weights.append(normal(size=(neurons_per_layer[i],\
                                         neurons_per_layer[i - 1])))
@@ -38,53 +44,60 @@ class GeneralNetwork:
 
         return 1 / (1 + exp(-(dot(W, x) + b)))
 
-    def train(self, Data, eta = 0.1, niter = 100000):
+    def train(self, Data, eta = 0.1, epochs = 10000, replacement = 0):
 
-        cost   = zeros(niter)
+        cost   = zeros((epochs, Data.xtrain.shape[1]))
         xtrain = zeros((Data.xtrain.shape[0], 1))
         ytrain = zeros((Data.ytrain.shape[0], 1))
         activation = []
         delta      = []
-        for counter in arange(niter):
-            k = randint(Data.xtrain.shape[1])
-            # Training Data
-            xtrain[:, 0], ytrain[:, 0] = Data.xtrain[:, k], Data.ytrain[:, k]
 
-            # Forward Prop
-            for s in arange(self.number_of_layers):
-                activation.append(self.activate(xtrain,            \
+        for update in arange(epochs):
+            shuffled_ints = array(arange(Data.xtrain.shape[1]))
+            shuffle(shuffled_ints)
+            for counter in arange(shuffled_ints.shape[0]):
+                if not replacement:
+                        k = shuffled_ints[counter]
+                        # without replacement
+                else:
+                        k = randint(Data.xtrain.shape[1])
+                        # with replacement
+
+                # Training Data
+                xtrain[:, 0], ytrain[:, 0] = Data.xtrain[:, k], Data.ytrain[:, k]
+
+                # Forward Prop
+                for s in arange(self.number_of_layers):
+                    activation.append(self.activate(xtrain,            \
                         self.weights[s], self.biases[s]))
-                xtrain = activation[s]
-            #  Back Prop
+                    xtrain = activation[s]
 
-        #    delta.append(activation[-1] * (1 - activation[-1]) * (activation[-1] - ytrain))
-        #    delta.append(activation[-2] * (1 - activation[-2]) * dot(self.weights[-1].T, delta[0]))
-        #    delta.append(activation[-3] * (1 - activation[-3]) * dot(self.weights[-2].T, delta[1]))
-
-
-            delta.append(activation[-1] * (1 - activation[-1]) * (activation[-1] - ytrain))
-            for s in arange(0, self.number_of_layers-1):
-                delta.append(activation[-2 - s] * (1 - activation[-2 - s]) * \
-                dot(self.weights[-1  - s].T, delta[s]))
+                #  Back Prop
+                delta.append(activation[-1] * (1 - activation[-1]) * (activation[-1] - ytrain))
+                for s in arange(0, self.number_of_layers-1):
+                    delta.append(activation[-2 - s] * (1 - activation[-2 - s]) * \
+                    dot(self.weights[-1  - s].T, delta[s]))
 
 
-            #  Update
+                #  Update
+                self.weights[0]  -= eta * delta[-1] * Data.xtrain[:, k].T
+                for s in arange(1, self.number_of_layers):
+                    if s >= 1:
+                        self.weights[s]   -= eta * dot(delta[-(s + 1)], activation[s - 1].T)
 
-            self.weights[0]  -= eta * delta[-1] * Data.xtrain[:, k].T
-            for s in arange(1, self.number_of_layers):
-                if s >= 1:
-                    self.weights[s]   -= eta * dot(delta[-(s + 1)], activation[s - 1].T)
+                deltaflip = delta
+                deltaflip.reverse()
 
-            deltaflip = delta
-            deltaflip.reverse()
+                for s in arange(self.number_of_layers):
+                    self.biases[s] -= eta * deltaflip[s]
 
-            for s in arange(self.number_of_layers):
-                self.biases[s] -= eta * deltaflip[s]
+                activation = []
+                delta      = []
 
-            activation = []
-            delta      = []
+                cost[update, counter] = self.cost_function(Data)
 
-            cost[counter] = self.cost_function(Data)
+            if self.verbose:
+                print('Average cost for epoch ', update + 1, 'is :', mean(cost[update, :]))
 
         return cost
 
@@ -134,17 +147,30 @@ class Data:
 
 if __name__ == '__main__':
 
-    Network = GeneralNetwork(3, [2, 20, 2])
+    seed(1)
+    # set seed for reproducablity
+    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1)
+    # define network architecture using GeneralNetwork object
+    Data_obj    = Data(10, highamdata = True)
+    # create data using Data object
+    cost1   = Network.train(Data_obj)
+    av_cost1 = [mean(cost1[i, :]) for i in arange(cost1.shape[0])]
+    # train the network with the data
+
+    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1)
     # define network architecture using GeneralNetwork object
     Data    = Data(10, highamdata = True)
     # create data using Data object
-    cost = Network.train(Data)
+    cost2 = Network.train(Data, replacement = 1)
     # train the network with the data
+    av_cost2 = [mean(cost2[i, :]) for i in arange(cost2.shape[0])]
 
     import matplotlib.pylab as plt
     # import plotting module
-    plt.plot(cost)
-    plt.xlabel(r'Iteration Number', fontsize = 24)
-    plt.ylabel(r'Cost', fontsize = 24)
+    plt.plot(av_cost1)
+    plt.plot(av_cost2)
+    plt.legend(['Without Replacement', 'With Replacement'])
+    plt.xlabel(r'Epoch', fontsize = 20)
+    plt.ylabel(r'Cost', fontsize = 20)
     plt.savefig('demonstration.png')
     plt.show()
