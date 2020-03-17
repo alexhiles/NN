@@ -10,7 +10,22 @@ rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern']})
 rc('text', usetex = True)
 
 class GeneralNetwork:
+    ''' A GeneralNetwork object contains information about network architecture.
+        These include: weights, biases, number of layers, etc. Current
+        implementation focuses solely on fully connected networks, though we
+        plan to incorporate other variants.
+
+    '''
     def __init__(self, number_of_layers, neurons_per_layer, verbose = 0):
+        '''
+        Inputs: number_of_layers  (int) : specifies number of layers in the network.
+                neurons_per_layer (int) : specifies number of neurons in the network.
+                                          Each entry gives the total number of neurons
+                                          for one layer.
+                verbose       (boolean) : output flag for user.
+        Outputs: N/A
+        Description: Initialization function of a GeneralNetwork object.
+        '''
 
         try:
             if number_of_layers != len(neurons_per_layer):
@@ -25,8 +40,13 @@ class GeneralNetwork:
 
         list_of_weight_matrices = [normal(size=(neurons_per_layer[0], \
                                                 neurons_per_layer[0]))]
+        # create first entry connecting input layer to first hidden layer
         list_of_bias_vectors    = [normal(size=(neurons_per_layer[0], 1))]
+        # Generate first entry in the bias vector. It corresponds to the bias
+        # for the first layer
 
+
+        # Initialization
         self.weights            = list_of_weight_matrices
         self.biases             = list_of_bias_vectors
 
@@ -35,10 +55,16 @@ class GeneralNetwork:
 
         self.verbose            = verbose
 
+        self.activation         = []
+        self.delta              = []
+
+
+        # Populate list of weight matrices per layer 
         for i in arange(1, len(neurons_per_layer)):
             self.weights.append(normal(size=(neurons_per_layer[i],\
                                         neurons_per_layer[i - 1])))
             self.biases.append(normal(size=(neurons_per_layer[i], 1)))
+
 
     def activate(self, x, W, b):
 
@@ -49,8 +75,6 @@ class GeneralNetwork:
         cost   = zeros((epochs, Data.xtrain.shape[1]))
         xtrain = zeros((Data.xtrain.shape[0], 1))
         ytrain = zeros((Data.ytrain.shape[0], 1))
-        activation = []
-        delta      = []
 
         for update in arange(epochs):
             shuffled_ints = array(arange(Data.xtrain.shape[1]))
@@ -68,31 +92,31 @@ class GeneralNetwork:
 
                 # Forward Prop
                 for s in arange(self.number_of_layers):
-                    activation.append(self.activate(xtrain,            \
+                    self.activation.append(self.activate(xtrain,            \
                         self.weights[s], self.biases[s]))
-                    xtrain = activation[s]
+                    xtrain = self.activation[s]
 
                 #  Back Prop
-                delta.append(activation[-1] * (1 - activation[-1]) * (activation[-1] - ytrain))
+                self.delta.append(self.activation[-1] * (1 - self.activation[-1]) * (self.activation[-1] - ytrain))
                 for s in arange(0, self.number_of_layers-1):
-                    delta.append(activation[-2 - s] * (1 - activation[-2 - s]) * \
-                    dot(self.weights[-1  - s].T, delta[s]))
+                    self.delta.append(self.activation[-2 - s] * (1 - self.activation[-2 - s]) * \
+                    dot(self.weights[-1  - s].T, self.delta[s]))
 
 
                 #  Update
-                self.weights[0]  -= eta * delta[-1] * Data.xtrain[:, k].T
+                self.weights[0]  -= eta * self.delta[-1] * Data.xtrain[:, k].T
                 for s in arange(1, self.number_of_layers):
                     if s >= 1:
-                        self.weights[s]   -= eta * dot(delta[-(s + 1)], activation[s - 1].T)
+                        self.weights[s]   -= eta * dot(self.delta[-(s + 1)], self.activation[s - 1].T)
 
-                deltaflip = delta
+                deltaflip = self.delta
                 deltaflip.reverse()
 
                 for s in arange(self.number_of_layers):
                     self.biases[s] -= eta * deltaflip[s]
 
-                activation = []
-                delta      = []
+                self.activation = []
+                self.delta      = []
 
                 cost[update, counter] = self.cost_function(Data)
 
@@ -107,10 +131,6 @@ class GeneralNetwork:
 
         for i in arange(temp_cost.shape[0]):
             x[0,0], x[1,0] = Data.xtrain[0,i], Data.xtrain[1,i]
-
-    #        a2 = self.activate(x, self.weights[0],  self.biases[0])
-    #        a3 = self.activate(a2, self.weights[1], self.biases[1])
-    #        a4 = self.activate(a3, self.weights[2], self.biases[2])
 
             for s in arange(self.number_of_layers):
                 a = self.activate(x, self.weights[s], self.biases[s])
