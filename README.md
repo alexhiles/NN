@@ -3,6 +3,7 @@ General artificial neural network (ANN) implemented in Python.
 
 Currently implemented:
 - Naive Implementation based on work in the [paper](https://epubs.siam.org/doi/pdf/10.1137/18M1165748).
+
 - General Implementation of arbitrary neurons and arbitrary layers for a
 classification problem involving noughts and crosses.
 
@@ -33,6 +34,8 @@ Similar loss curves are found when running the naiveANN.py file, though this is 
 - Implement batch stochastic gradient descent and other optimizer techniques i.e. ADAM
 
 - Add visualization of classifying the data points into categories
+
+- Add ReLU, leaky ReLU and other activation functions as options
 
 #### References
 
