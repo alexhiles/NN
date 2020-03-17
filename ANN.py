@@ -6,6 +6,7 @@ import matplotlib.pylab as plt
 import sys
 
 from matplotlib import rc
+
 rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern']})
 rc('text', usetex = True)
 
@@ -59,7 +60,7 @@ class GeneralNetwork:
         self.delta              = []
 
 
-        # Populate list of weight matrices per layer 
+        # Populate list of weight matrices per layer
         for i in arange(1, len(neurons_per_layer)):
             self.weights.append(normal(size=(neurons_per_layer[i],\
                                         neurons_per_layer[i - 1])))
@@ -67,19 +68,56 @@ class GeneralNetwork:
 
 
     def activate(self, x, W, b):
+        '''
+        Inputs:    x (1D numpy array) : input from previous layer
+                   W (2D numpy array) : weight matrix for current layer
+                   b (1D numpy array) : bias vector   for current layer
+        Outputs: Sigmoid function output, this is the activation function that
+                 is currently applied (between 0 and 1).
+
+        Description: Function calculates activation for a layer, where each
+                     entry in the activation array represents the activation for
+                     one neuron.
+        '''
 
         return 1 / (1 + exp(-(dot(W, x) + b)))
 
     def train(self, Data, eta = 0.1, epochs = 10000, replacement = 0):
+        '''
+        Inputs:   Data        (object) : this object contains information
+                                         about the training data. The object
+                                         has information about LABELLED data
+                                         (x_train, y_train) pairs.
+                  eta         (float)  : learning rate, i.e. how much we update.
+                                         This is currently constant.
+                  epochs      (int)    : number of cycles over a complete update
+                                         of training data.
+                  replacement (int)    : variable decides whether to use each
+                                         piece of training data once in an epoch
+                                         or sometimes some multiple and others
+                                         not at all.
+        Outputs:  cost (2D numpy array): contains the cost measurement after each
+                                         update, per epoch.
 
+        Description: This function performs gradient descent with respect to the
+                     training data. It finds weights and biases which are tuned
+                     such that the f_NN(x_train) = y_train, where f_NN is a function
+                     outlining the architecture of the neural network.
+        '''
         cost   = zeros((epochs, Data.xtrain.shape[1]))
+        # create empty 2D numpy array for storage
         xtrain = zeros((Data.xtrain.shape[0], 1))
+        # create empty 1D numpy array which will be overwritten with training data
         ytrain = zeros((Data.ytrain.shape[0], 1))
-
+        # create empty 1D numpy array which will be overwritten with training data
         for update in arange(epochs):
+            # begin looping over training data epochs many times
             shuffled_ints = array(arange(Data.xtrain.shape[1]))
+            # generate integer array to access specific training data per update
             shuffle(shuffled_ints)
+            # shuffle integers for no bias toward certain configuration
             for counter in arange(shuffled_ints.shape[0]):
+                # begin cycle over training set
                 if not replacement:
                         k = shuffled_ints[counter]
                         # without replacement
@@ -103,7 +141,7 @@ class GeneralNetwork:
                     dot(self.weights[-1  - s].T, self.delta[s]))
 
 
-                #  Update
+                #  Update weights
                 self.weights[0]  -= eta * self.delta[-1] * Data.xtrain[:, k].T
                 for s in arange(1, self.number_of_layers):
                     if s >= 1:
@@ -111,54 +149,90 @@ class GeneralNetwork:
 
                 deltaflip = self.delta
                 deltaflip.reverse()
+                # reverse to put bias update in loop
 
+
+                # Update biases
                 for s in arange(self.number_of_layers):
                     self.biases[s] -= eta * deltaflip[s]
 
+                # Reset activation and errors for next loop
                 self.activation = []
                 self.delta      = []
 
+                # Save cost
                 cost[update, counter] = self.cost_function(Data)
 
             if self.verbose:
+                # verbosity flag prints to console
                 print('Average cost for epoch ', update + 1, 'is :', mean(cost[update, :]))
 
         return cost
 
     def cost_function(self, Data):
-        temp_cost = zeros((Data.xtrain.shape[1],1))
-        x         = zeros((Data.xtrain.shape[0],1))
+        '''
+        Inputs      : Data (object) - contains information on all training
+                                      data.
 
+        Outputs     : evaluated cost function.
+
+        Description : This function evaluates the accuracy of the trained
+                      function with the actual data.
+
+        '''
+        temp_cost = zeros((Data.xtrain.shape[1],1))
+        # generate zeros 2D numpy array for storing cost
+        x         = zeros((Data.xtrain.shape[0],1))
+        # generate zeros 2D numpy array for storing training data before
+        # evaluation
         for i in arange(temp_cost.shape[0]):
+            # begin loop for computing each individual cost from each piece
+            # of training data
             x[0,0], x[1,0] = Data.xtrain[0,i], Data.xtrain[1,i]
 
+            # Feedforward
             for s in arange(self.number_of_layers):
                 a = self.activate(x, self.weights[s], self.biases[s])
                 x = a
             temp_cost[i] = norm(x.ravel() - Data.ytrain[:, i], 2)
+
         return norm(temp_cost, 2)**2
 class Data:
-    def __init__(self, number_of_data_points,highamdata=True):
-
+    ''' Data object contains information about training data. Its initialization
+        generates the training data for this particular problem
+    '''
+    def __init__(self, number_of_data_points, highamdata = True):
+        '''
+        Inputs: number_of_data_points (int)     - total data points without higham
+                                                  data.
+                highamdata            (boolean) - whether to use data from higham
+                                                  paper or not.
+        '''
 
         if not highamdata:
+            # generate data
             self.x           = linspace(0, 1, number_of_data_points)
             x1               = zeros((1, number_of_data_points))
             x2               = zeros((1, number_of_data_points))
-            x1[0,:]          = uniform(0, -self.x + 1, self.x.shape[0])
-            x2[0,:]          = uniform(-self.x + 1, 1, self.x.shape[0])
+            x1[0,:]          = uniform(0, - self.x + 1, self.x.shape[0])
+            x2[0,:]          = uniform(- self.x + 1, 1, self.x.shape[0])
         else:
-
+            # use higham data
             x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, 0.6, 0.5, 0.9, 0.4, 0.7])
             x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, 0.3, 0.6, 0.2, 0.4, 0.6])
 
 
         y1               = zeros((1, int(number_of_data_points / 2)))
+        # assign labelling
         y2               = ones((1,  int(number_of_data_points / 2)))
+        # assign labelling
+
+        # zeros arrays for training data
 
         self.xtrain      = zeros((2, number_of_data_points))
         self.ytrain      = zeros((2, number_of_data_points))
 
+        # begin assignment
         self.xtrain[0,:], self.xtrain[1,:]                = x1, x2
         self.ytrain[0, 0:int(number_of_data_points / 2)]  = y2
         self.ytrain[0, int(number_of_data_points   / 2):] = y1
