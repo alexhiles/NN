@@ -18,7 +18,7 @@ class GeneralNetwork:
 
     '''
     def __init__(self, number_of_layers, neurons_per_layer, verbose = 0, \
-                       activation_function = "sigmoid"):
+                       activation_function = "sigmoid", vis = False):
         '''
         Inputs: number_of_layers  (int) : specifies number of layers in the network.
                 neurons_per_layer (int) : specifies number of neurons in the network.
@@ -61,6 +61,7 @@ class GeneralNetwork:
         self.delta               = []
 
         self.activation_function = activation_function
+        self.vis                 = vis
 
         # Populate list of weight matrices per layer
         for i in arange(1, len(neurons_per_layer)):
@@ -206,7 +207,7 @@ class GeneralNetwork:
 
                 # Save cost
                 cost[update, counter] = self.cost_function(Data)
-            if update == 2:
+            if update == epochs - 1 and self.vis == True:
                 self.visual(Data)
 
             if self.verbose:
@@ -214,7 +215,6 @@ class GeneralNetwork:
                 print('Average cost for epoch ', update + 1, 'is :', mean(cost[update, :]))
 
         return cost
-
 
     def visual(self, Data):
         # TESTTT
@@ -240,9 +240,6 @@ class GeneralNetwork:
         plt.show()
         plt.close()
         return
-
-
-
 
     def cost_function(self, Data):
         '''
@@ -325,7 +322,6 @@ if __name__ == '__main__':
     # create data using Data object
     cost1   = Network.train(Data_obj)
 
-    print(Network.weights)
 
     av_cost1 = [mean(cost1[i, :]) for i in arange(cost1.shape[0])]
     # train the network with the data
