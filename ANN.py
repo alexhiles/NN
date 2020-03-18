@@ -17,7 +17,8 @@ class GeneralNetwork:
         plan to incorporate other variants.
 
     '''
-    def __init__(self, number_of_layers, neurons_per_layer, verbose = 0):
+    def __init__(self, number_of_layers, neurons_per_layer, verbose = 0, \
+                       activation_function = "sigmoid"):
         '''
         Inputs: number_of_layers  (int) : specifies number of layers in the network.
                 neurons_per_layer (int) : specifies number of neurons in the network.
@@ -48,17 +49,18 @@ class GeneralNetwork:
 
 
         # Initialization
-        self.weights            = list_of_weight_matrices
-        self.biases             = list_of_bias_vectors
+        self.weights             = list_of_weight_matrices
+        self.biases              = list_of_bias_vectors
 
-        self.number_of_layers   = number_of_layers
-        self.neurons_per_layer  = neurons_per_layer
+        self.number_of_layers    = number_of_layers
+        self.neurons_per_layer   = neurons_per_layer
 
-        self.verbose            = verbose
+        self.verbose             = verbose
 
-        self.activation         = []
-        self.delta              = []
+        self.activation          = []
+        self.delta               = []
 
+        self.activation_function = activation_function
 
         # Populate list of weight matrices per layer
         for i in arange(1, len(neurons_per_layer)):
@@ -80,7 +82,50 @@ class GeneralNetwork:
                      one neuron.
         '''
 
-        return 1 / (1 + exp(-(dot(W, x) + b)))
+        if self.activation_function == "sigmoid":
+            return 1 / (1 + exp(-(dot(W, x) + b)))
+        elif self.activation_function == "relu":
+            dummy = dot(W, x) + b
+            for i in arange(dummy.shape[0]):
+                if dummy[i, 0] > 0:
+                    pass
+                else:
+                    dummy[i, 0] = 0.0
+            return dummy
+        elif self.activation_function == "leakyrelu":
+            dummy = dot(W, x) + b
+            for i in arange(dummy.shape[0]):
+                if dummy[i, 0] > 0:
+                    pass
+                else:
+                    dummy[i, 0] = 0.01 * dummy[i, 0]
+            return dummy
+
+    def gradient(self, x):
+        '''
+        '''
+        if self.activation_function == "sigmoid":
+            return x * (1 - x)
+        elif self.activation_function == "relu":
+            dummy = x
+            for i in arange(x.shape[0]):
+                if dummy[i, 0] > 0:
+                    dummy[i, 0] = 1.0
+
+                else:
+                    dummy[i, 0] = 0.0
+            return dummy
+        elif self.activation_function == "leakyrelu":
+            dummy = x
+            for i in arange(x.shape[0]):
+                if dummy[i, 0] > 0:
+                    dummy[i, 0] = 1.0
+
+                else:
+                    dummy[i, 0] = 0.01 * dummy[i, 0]
+            return dummy
+
+        return
 
     def train(self, Data, eta = 0.1, epochs = 10000, replacement = 0):
         '''
@@ -135,11 +180,10 @@ class GeneralNetwork:
                     xtrain = self.activation[s]
 
                 #  Back Prop
-                self.delta.append(self.activation[-1] * (1 - self.activation[-1]) * (self.activation[-1] - ytrain))
+                self.delta.append(self.gradient(self.activation[-1]) * (self.activation[-1] - ytrain))
                 for s in arange(0, self.number_of_layers-1):
-                    self.delta.append(self.activation[-2 - s] * (1 - self.activation[-2 - s]) * \
+                    self.delta.append(self.gradient(self.activation[-2 - s]) * \
                     dot(self.weights[-1  - s].T, self.delta[s]))
-
 
                 #  Update weights
                 self.weights[0]  -= eta * self.delta[-1] * Data.xtrain[:, k].T
@@ -162,12 +206,43 @@ class GeneralNetwork:
 
                 # Save cost
                 cost[update, counter] = self.cost_function(Data)
+            if update == 2:
+                self.visual(Data)
 
             if self.verbose:
                 # verbosity flag prints to console
                 print('Average cost for epoch ', update + 1, 'is :', mean(cost[update, :]))
 
         return cost
+
+
+    def visual(self, Data):
+        # TESTTT
+        xrange = arange(0, 1, 0.05)
+        yrange = arange(0, 1, 0.05)
+
+        x   = zeros((Data.xtrain.shape[0],1))
+        emp = zeros((xrange.shape[0], yrange.shape[0]))
+        fig, ax = plt.subplots(1, 1, figsize = (6, 6))
+        for xcount, xval in enumerate(xrange):
+            for ycount, yval in enumerate(yrange):
+                x[0,0], x[1,0] = xval, yval
+                for s in arange(self.number_of_layers):
+                    a = self.activate(x, self.weights[s], self.biases[s])
+                    x = a
+
+                if x[0, 0] > x[1, 0]:
+                    plt.scatter(x[0,0], x[1,0], marker = '^', c = 'b', lw = 5)
+                    continue
+                else:
+                    plt.scatter(x[0,0], x[1,0], marker = 'o', c = 'r', lw = 5)
+                    continue
+        plt.show()
+        plt.close()
+        return
+
+
+
 
     def cost_function(self, Data):
         '''
@@ -194,6 +269,7 @@ class GeneralNetwork:
             for s in arange(self.number_of_layers):
                 a = self.activate(x, self.weights[s], self.biases[s])
                 x = a
+
             temp_cost[i] = norm(x.ravel() - Data.ytrain[:, i], 2)
 
         return norm(temp_cost, 2)**2
@@ -243,11 +319,14 @@ if __name__ == '__main__':
 
     seed(1)
     # set seed for reproducablity
-    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1)
+    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1, activation_function = "sigmoid")
     # define network architecture using GeneralNetwork object
     Data_obj    = Data(10, highamdata = True)
     # create data using Data object
     cost1   = Network.train(Data_obj)
+
+    print(Network.weights)
+
     av_cost1 = [mean(cost1[i, :]) for i in arange(cost1.shape[0])]
     # train the network with the data
 
