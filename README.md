@@ -35,7 +35,7 @@ Similar loss curves are found when running the naiveANN.py file, though this is 
 
 - Add visualization of classifying the data points into categories
 
-- Add ReLU, leaky ReLU and other activation functions as options
+- Get ReLU and LeakyReLU working in gradient descent
 
 #### References
 
