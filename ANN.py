@@ -104,6 +104,12 @@ class GeneralNetwork:
 
     def gradient(self, x):
         '''
+
+        Inputs      : x     (2D numpy array)
+        Outputs     : dummy (2D numpy array)
+        Description : Computes gradient for each type of activation function
+
+        Some errors still exist here. 
         '''
         if self.activation_function == "sigmoid":
             return x * (1 - x)
