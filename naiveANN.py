@@ -18,7 +18,7 @@ def cost_function(W2,W3,W4,b2,b3,b4, x1, x2,y):
 
     Outputs:
 
-    Description: 
+    Description:
     '''
 
     costvec = np.zeros((10, 1))
@@ -31,6 +31,15 @@ def cost_function(W2,W3,W4,b2,b3,b4, x1, x2,y):
         costvec[i] = np.linalg.norm(a4.ravel()-y[:,i], 2)
 
     return np.linalg.norm(costvec, 2)**2
+
+def predict(W2, W3, W4, b2, b3, b4, xvec):
+
+    a2 = activate(xvec, W2, b2)
+    a3 = activate(a2,   W3, b3)
+    a4 = activate(a3,   W4, b4)
+
+    return a4
+
 import matplotlib.pylab as plt
 
 x1 = np.array([0.1, 0.3, 0.1, 0.6, 0.4, 0.6, 0.5, 0.9, 0.4, 0.7])
@@ -80,5 +89,38 @@ for counter in np.arange(Niter):
     cost_value[counter] = cost_function(W2,W3,W4,b2,b3,b4,x1, x2, y)
 import matplotlib.pylab as plt
 
-plt.plot(cost_value)
+#plt.plot(cost_value)
+#plt.show()
+
+X, Y = np.meshgrid(np.linspace(0, 1, 200), np.linspace(0, 1, 200))
+
+X1Test = np.array(X.ravel())
+X2Test = np.array(Y.ravel())
+
+XTest  = np.stack((X1Test, X2Test), axis = 1)
+empty  = np.zeros(200*200)
+
+
+for i in np.arange(XTest.shape[0]):
+
+    xvec[0,0], xvec[1,0] = XTest[i, 0], XTest[i, 1]
+
+
+    YPredictions = predict(W2, W3, W4, b2, b3, b4, xvec)
+    YPredictions = np.array(YPredictions[0] >= YPredictions[1])
+
+    print(YPredictions)
+
+    if YPredictions[0] == True:
+        empty[i] = 1
+
+
+YPred = empty.reshape((200, 200))
+import matplotlib.pyplot as plt
+plt.figure()
+#plt.imshow(YPred)
+plt.contourf(X, Y, YPred)
+
+plt.scatter(x1[0:5], x2[0:5], marker='^', lw=5)
+plt.scatter(x1[5:],  x2[5:], marker='o', lw=5)
 plt.show()
