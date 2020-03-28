@@ -1,5 +1,5 @@
 from numpy import array, zeros, ones, arange, exp, dot, save, pi, linspace,\
-                  matrix, ceil, mean
+                  matrix, ceil, mean, meshgrid, stack, mod
 from numpy.random import randn, randint, uniform, normal, seed, shuffle
 from numpy.linalg import norm
 import matplotlib.pylab as plt
@@ -102,6 +102,14 @@ class GeneralNetwork:
                     dummy[i, 0] = 0.01 * dummy[i, 0]
             return dummy
 
+
+    def predict(self, x):
+        for s in arange(self.number_of_layers):
+            a = self.activate(x, self.weights[s], self.biases[s])
+            x = a
+
+        return a
+
     def gradient(self, x):
         '''
 
@@ -109,7 +117,7 @@ class GeneralNetwork:
         Outputs     : dummy (2D numpy array)
         Description : Computes gradient for each type of activation function
 
-        Some errors still exist here. 
+        Some errors still exist here.
         '''
         if self.activation_function == "sigmoid":
             return x * (1 - x)
@@ -134,7 +142,7 @@ class GeneralNetwork:
 
         return
 
-    def train(self, Data, eta = 0.1, epochs = 10000, replacement = 0):
+    def train(self, Data, eta = 0.75, epochs = 10000, replacement = 0):
         '''
         Inputs:   Data        (object) : this object contains information
                                          about the training data. The object
@@ -214,37 +222,58 @@ class GeneralNetwork:
                 # Save cost
                 cost[update, counter] = self.cost_function(Data)
             if update == epochs - 1 and self.vis == True:
-                self.visual(Data)
-
+               self.visual(Data)
             if self.verbose:
                 # verbosity flag prints to console
                 print('Average cost for epoch ', update + 1, 'is :', mean(cost[update, :]))
 
         return cost
 
-    def visual(self, Data):
-        # TESTTT
-        xrange = arange(0, 1, 0.05)
-        yrange = arange(0, 1, 0.05)
+    def visual(self, Data, no_of_points = 1000):
+        '''
+        '''
+        x    = zeros((2,1))
 
-        x   = zeros((Data.xtrain.shape[0],1))
-        emp = zeros((xrange.shape[0], yrange.shape[0]))
-        fig, ax = plt.subplots(1, 1, figsize = (6, 6))
-        for xcount, xval in enumerate(xrange):
-            for ycount, yval in enumerate(yrange):
-                x[0,0], x[1,0] = xval, yval
-                for s in arange(self.number_of_layers):
-                    a = self.activate(x, self.weights[s], self.biases[s])
-                    x = a
+        X, Y = meshgrid(linspace(0, 1, no_of_points), linspace(0, 1, no_of_points))
+        # create grid of points
+        X1, X2 = array(X.ravel()), array(Y.ravel())
+        # vectorize
+        Stack  = stack((X1, X2), axis = 1)
+        # left to right stack, columnwise
+        empty  = zeros(X.shape[0]*X.shape[0])
+        # matrix of values
 
-                if x[0, 0] > x[1, 0]:
-                    plt.scatter(x[0,0], x[1,0], marker = '^', c = 'b', lw = 5)
-                    continue
-                else:
-                    plt.scatter(x[0,0], x[1,0], marker = 'o', c = 'r', lw = 5)
-                    continue
+        for i in arange(Stack.shape[0]):
+            # run over each coordinate
+            x[0,0], x[1,0] = Stack[i, 0], Stack[i, 1]
+            # input
+            Predictions = self.predict(x)
+            # predict
+            Predictions = array(Predictions[0] >= Predictions[1])
+            # create booleans
+            if Predictions[0] == True:
+                empty[i] = 1
+                # assign 1 where true
+
+        Pred = empty.reshape((X.shape[0], X.shape[0]))
+        # reshape ready for plotting contour
+        import matplotlib.pyplot as plt
+        plt.figure()
+        # plot figure
+        plt.contourf(X, Y, Pred)
+        # plot contour
+
+        plt.scatter(Data.xtrain[0, 0:5], Data.xtrain[1, 0:5], marker='^', lw=5)
+        # plot first half of training set
+        plt.scatter(Data.xtrain[0, 5:], Data.xtrain[1, 5:], marker='o', lw=5)
+        # plot second half of training set
+        if Data.highamdata:
+            plt.savefig('higham_planes.png')
+            # save figure
+        else:
+            plt.savefig('planes.png')
+            # save figure 
         plt.show()
-        plt.close()
         return
 
     def cost_function(self, Data):
@@ -288,7 +317,9 @@ class Data:
                                                   paper or not.
         '''
 
-        if not highamdata:
+        self.highamdata = highamdata
+
+        if not self.highamdata:
             # generate data
             self.x           = linspace(0, 1, number_of_data_points)
             x1               = zeros((1, number_of_data_points))
@@ -321,20 +352,22 @@ class Data:
 if __name__ == '__main__':
 
     seed(1)
-    # set seed for reproducablity
-    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1, activation_function = "sigmoid")
+    # set seed for reproducability
+    Network = GeneralNetwork(3, [2, 3, 2], verbose = 1, vis = True, \
+                             activation_function = "sigmoid")
     # define network architecture using GeneralNetwork object
-    Data_obj    = Data(10, highamdata = True)
+    Data_obj    = Data(10, highamdata = False)
     # create data using Data object
-    cost1   = Network.train(Data_obj)
+    cost1   = Network.train(Data_obj, replacement = 0)
 
 
     av_cost1 = [mean(cost1[i, :]) for i in arange(cost1.shape[0])]
     # train the network with the data
 
-    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1)
+    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1, vis = True, \
+                             activation_function = "sigmoid")
     # define network architecture using GeneralNetwork object
-    Data    = Data(10, highamdata = True)
+    Data    = Data(10, highamdata = False)
     # create data using Data object
     cost2 = Network.train(Data, replacement = 1)
     # train the network with the data
