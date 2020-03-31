@@ -102,7 +102,6 @@ class GeneralNetwork:
                     dummy[i, 0] = 0.01 * dummy[i, 0]
             return dummy
 
-
     def predict(self, x):
         for s in arange(self.number_of_layers):
             a = self.activate(x, self.weights[s], self.biases[s])
@@ -272,7 +271,7 @@ class GeneralNetwork:
             # save figure
         else:
             plt.savefig('planes.png')
-            # save figure 
+            # save figure
         plt.show()
         return
 
