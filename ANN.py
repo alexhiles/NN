@@ -17,7 +17,7 @@ class GeneralNetwork:
         plan to incorporate other variants.
 
     '''
-    def __init__(self, number_of_layers, neurons_per_layer, verbose = 0, \
+    def __init__(self, number_of_layers : int, neurons_per_layer : list, verbose = 0, \
                        activation_function = "sigmoid", vis = False):
         '''
         Inputs: number_of_layers  (int) : specifies number of layers in the network.
@@ -70,7 +70,7 @@ class GeneralNetwork:
             self.biases.append(normal(size=(neurons_per_layer[i], 1)))
 
 
-    def activate(self, x, W, b):
+    def activate(self, x : array, W : array, b : array):
         '''
         Inputs:    x (1D numpy array) : input from previous layer
                    W (2D numpy array) : weight matrix for current layer
@@ -102,14 +102,14 @@ class GeneralNetwork:
                     dummy[i, 0] = 0.01 * dummy[i, 0]
             return dummy
 
-    def predict(self, x):
+    def predict(self, x : array):
         for s in arange(self.number_of_layers):
             a = self.activate(x, self.weights[s], self.biases[s])
             x = a
 
         return a
 
-    def gradient(self, x):
+    def gradient(self, x : array):
         '''
 
         Inputs      : x     (2D numpy array)
@@ -141,7 +141,7 @@ class GeneralNetwork:
 
         return
 
-    def train(self, Data, eta = 0.75, epochs = 10000, replacement = 0):
+    def train(self, Data, eta : float = 0.1, epochs : int = 10000, replacement : bool = 0):
         '''
         Inputs:   Data        (object) : this object contains information
                                          about the training data. The object
@@ -228,7 +228,7 @@ class GeneralNetwork:
 
         return cost
 
-    def visual(self, Data, no_of_points = 1000):
+    def visual(self, Data, no_of_points : int = 1000):
         '''
         '''
         x    = zeros((2,1))
@@ -308,7 +308,7 @@ class Data:
     ''' Data object contains information about training data. Its initialization
         generates the training data for this particular problem
     '''
-    def __init__(self, number_of_data_points, highamdata = True):
+    def __init__(self, number_of_data_points : int, highamdata = True):
         '''
         Inputs: number_of_data_points (int)     - total data points without higham
                                                   data.
