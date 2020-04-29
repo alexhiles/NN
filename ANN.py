@@ -20,8 +20,8 @@ class GeneralNetwork:
     def __init__(self, number_of_layers : int, neurons_per_layer : list, verbose = 0, \
                        activation_function = "sigmoid", vis = False):
         '''
-        Inputs: number_of_layers  (int) : specifies number of layers in the network.
-                neurons_per_layer (int) : specifies number of neurons in the network.
+        Inputs: number_of_layers  (int)  : specifies number of layers in the network.
+                neurons_per_layer (list) : specifies number of neurons in the network.
                                           Each entry gives the total number of neurons
                                           for one layer.
                 verbose       (boolean) : output flag for user.
@@ -141,7 +141,7 @@ class GeneralNetwork:
 
         return
 
-    def train(self, Data, eta : float = 0.1, epochs : int = 10000, replacement : bool = 0):
+    def train(self, Data, eta : float = 1, epochs : int = 10000, replacement : bool = 0):
         '''
         Inputs:   Data        (object) : this object contains information
                                          about the training data. The object
@@ -257,14 +257,15 @@ class GeneralNetwork:
         Pred = empty.reshape((X.shape[0], X.shape[0]))
         # reshape ready for plotting contour
         import matplotlib.pyplot as plt
+        plt.style.use('Solarize_Light2')
         plt.figure()
         # plot figure
-        plt.contourf(X, Y, Pred)
+        plt.contourf(X, Y, Pred, cmap = 'cividis', alpha = 0.8)
         # plot contour
 
-        plt.scatter(Data.xtrain[0, 0:5], Data.xtrain[1, 0:5], marker='^', lw=5)
+        plt.scatter(Data.xtrain[0, 0:5], Data.xtrain[1, 0:5], marker='^', c = 'k', lw=3)
         # plot first half of training set
-        plt.scatter(Data.xtrain[0, 5:], Data.xtrain[1, 5:], marker='o', lw=5)
+        plt.scatter(Data.xtrain[0, 5:], Data.xtrain[1, 5:], marker='o', c='w', lw=3)
         # plot second half of training set
         if Data.highamdata:
             plt.savefig('higham_planes.png')
@@ -323,61 +324,32 @@ class Data:
             self.x           = linspace(0, 1, number_of_data_points)
             x1               = zeros((1, number_of_data_points))
             x2               = zeros((1, number_of_data_points))
-            x1[0,:]          = uniform(0, - self.x + 1, self.x.shape[0])
-            x2[0,:]          = uniform(- self.x + 1, 1, self.x.shape[0])
+            x1[0,:]          = uniform(0, 1, self.x.shape[0])
+            x2[0,:]          = uniform(0, 1, self.x.shape[0])
+            y1               = zeros((1, int(number_of_data_points / 2)))
+            # assign labelling
+            y2               = ones((1,  int(number_of_data_points / 2)))
+            # assign labelling
+            #y3               = zeros((1, int(number_of_data_points / 2)))
         else:
             # use higham data
             x1 = array([0.1, 0.3, 0.1, 0.6, 0.4, 0.6, 0.5, 0.9, 0.4, 0.7])
             x2 = array([0.1, 0.4, 0.5, 0.9, 0.2, 0.3, 0.6, 0.2, 0.4, 0.6])
 
 
-        y1               = zeros((1, int(number_of_data_points / 2)))
-        # assign labelling
-        y2               = ones((1,  int(number_of_data_points / 2)))
-        # assign labelling
+            y1               = zeros((1, int(number_of_data_points / 2)))
+            # assign labelling
+            y2               = ones((1,  int(number_of_data_points / 2)))
+            # assign labelling
 
-        # zeros arrays for training data
+            # zeros arrays for training data
 
         self.xtrain      = zeros((2, number_of_data_points))
         self.ytrain      = zeros((2, number_of_data_points))
 
-        # begin assignment
+            # begin assignment
         self.xtrain[0,:], self.xtrain[1,:]                = x1, x2
         self.ytrain[0, 0:int(number_of_data_points / 2)]  = y2
         self.ytrain[0, int(number_of_data_points   / 2):] = y1
         self.ytrain[1, 0:int(number_of_data_points / 2)]  = y1
         self.ytrain[1, int(number_of_data_points   / 2):] = y2
-
-if __name__ == '__main__':
-
-    seed(1)
-    # set seed for reproducability
-    Network = GeneralNetwork(3, [2, 3, 2], verbose = 1, vis = True, \
-                             activation_function = "sigmoid")
-    # define network architecture using GeneralNetwork object
-    Data_obj    = Data(10, highamdata = False)
-    # create data using Data object
-    cost1   = Network.train(Data_obj, replacement = 0)
-
-
-    av_cost1 = [mean(cost1[i, :]) for i in arange(cost1.shape[0])]
-    # train the network with the data
-
-    Network = GeneralNetwork(3, [2, 20, 2], verbose = 1, vis = True, \
-                             activation_function = "sigmoid")
-    # define network architecture using GeneralNetwork object
-    Data    = Data(10, highamdata = False)
-    # create data using Data object
-    cost2 = Network.train(Data, replacement = 1)
-    # train the network with the data
-    av_cost2 = [mean(cost2[i, :]) for i in arange(cost2.shape[0])]
-
-    import matplotlib.pylab as plt
-    # import plotting module
-    plt.plot(av_cost1)
-    plt.plot(av_cost2)
-    plt.legend(['Without Replacement', 'With Replacement'])
-    plt.xlabel(r'Epoch', fontsize = 20)
-    plt.ylabel(r'Cost', fontsize = 20)
-    plt.savefig('demonstration.png')
-    plt.show()
