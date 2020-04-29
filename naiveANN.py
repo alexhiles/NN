@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.random import uniform, randint, randn, normal
 import sys
+from timeit import default_timer as dt
 def activate(x, W, b):
     '''
     Inputs:
@@ -54,7 +55,7 @@ y[1: , 5: ] = np.ones((1,  5))
 W2,W3,W4 = normal(size=(2,2)), normal(size=(3,2)), normal(size=(2, 3))
 b2,b3,b4 = normal(size=(2,1)), normal(size=(3,1)), normal(size=(2, 1))
 
-eta = 0.1
+eta = 0.75
 Niter = 100000
 
 
@@ -87,7 +88,6 @@ for counter in np.arange(Niter):
     b4 -= eta * delta4
 
     cost_value[counter] = cost_function(W2,W3,W4,b2,b3,b4,x1, x2, y)
-import matplotlib.pylab as plt
 
 #plt.plot(cost_value)
 #plt.show()
@@ -109,7 +109,6 @@ for i in np.arange(XTest.shape[0]):
     YPredictions = predict(W2, W3, W4, b2, b3, b4, xvec)
     YPredictions = np.array(YPredictions[0] >= YPredictions[1])
 
-    print(YPredictions)
 
     if YPredictions[0] == True:
         empty[i] = 1
